@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Snake Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>🐍 Snake Game</h1>
+    <div class="scores">
+      <span>Score: <b id="score">0</b></span>
+      <span>Best: <b id="best">0</b></span>
+    </div>
+    <canvas id="game" width="360" height="360"></canvas>
+    <p id="msg">Start korte jekono arrow key / WASD chapo, ba swipe koro</p>
+    <div class="pad">
+      <button data-dir="up">▲</button>
+      <div>
+        <button data-dir="left">◀</button>
+        <button data-dir="down">▼</button>
+        <button data-dir="right">▶</button>
+      </div>
+    </div>
+    <button id="restart">Restart</button>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
