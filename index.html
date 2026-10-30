@@ -1,30 +1,109 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Snake Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#e8ecd3" />
+  <meta name="description" content="Snake with an LCD look: three speeds, solid or wrap-around edges, bonus food and sound." />
+  <title>Snake LCD</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%23c9d6a3'/%3E%3Cpath fill='%231f2a17' d='M1 5h5v1H1zM5 2h1v3H5z'/%3E%3Cpath fill='%23b8381f' d='M2 2h1v1H2z'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main>
-    <h1>🐍 Snake Game</h1>
-    <div class="scores">
-      <span>Score: <b id="score">0</b></span>
-      <span>Best: <b id="best">0</b></span>
-    </div>
-    <canvas id="game" width="360" height="360"></canvas>
-    <p id="msg">Start korte jekono arrow key / WASD chapo, ba swipe koro</p>
-    <div class="pad">
-      <button data-dir="up">▲</button>
-      <div>
-        <button data-dir="left">◀</button>
-        <button data-dir="down">▼</button>
-        <button data-dir="right">▶</button>
+  <div class="app" id="app">
+    <header class="hud">
+      <div class="top">
+        <div>
+          <h1 class="brand">Snake</h1>
+          <p class="mode" id="modeLabel">Classic, solid walls</p>
+        </div>
+        <div class="tools">
+          <button class="icon-btn" id="btnSound" type="button" aria-pressed="true" aria-label="Sound">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 9v6h4l5 4V5L7 9H3z" />
+              <path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" />
+              <path class="off" d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" />
+            </svg>
+          </button>
+          <button class="icon-btn" id="btnPause" type="button" aria-label="Pause" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+          </button>
+        </div>
       </div>
+      <dl class="stats">
+        <div><dt>Score</dt><dd id="score">0000</dd></div>
+        <div><dt>Best</dt><dd id="best">0000</dd></div>
+        <div><dt>Speed</dt><dd id="level">1</dd></div>
+      </dl>
+    </header>
+
+    <main class="board" id="board" data-edges="walls">
+      <canvas id="canvas" role="img" aria-label="Snake game board"></canvas>
+
+      <section class="overlay" id="menu" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+        <h2 class="title" id="menuTitle">Snake</h2>
+        <p class="lede">Eat to grow. Don't hit a wall or your own tail.</p>
+        <fieldset class="seg">
+          <legend>Speed</legend>
+          <div class="opts">
+            <label><input type="radio" name="diff" value="relaxed" /><span>Relaxed</span></label>
+            <label><input type="radio" name="diff" value="classic" /><span>Classic</span></label>
+            <label><input type="radio" name="diff" value="frantic" /><span>Frantic</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Edges</legend>
+          <div class="opts">
+            <label><input type="radio" name="edges" value="walls" /><span>Solid walls</span></label>
+            <label><input type="radio" name="edges" value="wrap" /><span>Wrap around</span></label>
+          </div>
+        </fieldset>
+        <p class="best-line">Your best in this mode: <strong id="menuBest">0000</strong></p>
+        <div class="row"><button class="btn" id="play" type="button">Play</button></div>
+      </section>
+
+      <section class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle" hidden>
+        <h2 class="title" id="pauseTitle">Paused</h2>
+        <p class="lede">The snake waits for you.</p>
+        <div class="row">
+          <button class="btn" id="resume" type="button">Resume</button>
+          <button class="btn ghost" id="quit" type="button">Quit to menu</button>
+        </div>
+      </section>
+
+      <section class="overlay" id="overOverlay" role="dialog" aria-modal="true" aria-labelledby="overTitle" hidden>
+        <h2 class="title danger" id="overTitle">Game over</h2>
+        <div>
+          <p class="stat-label">Score</p>
+          <p class="final" id="finalScore">0000</p>
+        </div>
+        <p class="note" id="finalNote"></p>
+        <div class="row">
+          <button class="btn" id="again" type="button">Play again</button>
+          <button class="btn ghost" id="toMenu" type="button">Change mode</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="bonus" id="bonusBar" aria-hidden="true"><span id="bonusFill"></span></div>
+
+    <div class="dpad" id="dpad" aria-label="Direction pad">
+      <button type="button" data-dir="up" aria-label="Up" style="grid-column:2;grid-row:1">&#9650;</button>
+      <button type="button" data-dir="left" aria-label="Left" style="grid-column:1;grid-row:2">&#9664;</button>
+      <button type="button" data-dir="down" aria-label="Down" style="grid-column:2;grid-row:2">&#9660;</button>
+      <button type="button" data-dir="right" aria-label="Right" style="grid-column:3;grid-row:2">&#9654;</button>
     </div>
-    <button id="restart">Restart</button>
-  </main>
+
+    <p class="hint">
+      <span class="kb">Arrow keys or WASD to steer. Space pauses.</span>
+      <span class="touch">Swipe on the board or use the pad.</span>
+    </p>
+  </div>
+
+  <noscript>This game needs JavaScript turned on.</noscript>
   <script src="game.js"></script>
 </body>
 </html>
